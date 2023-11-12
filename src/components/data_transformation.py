@@ -29,7 +29,7 @@ class DataTransformation:
                 steps = [
                     ("imputer", SimpleImputer(strategy="most_frequent")),
                     ("one_hot_encoder", OneHotEncoder()),
-                    ('scaler', StandardScaler())
+                    ('scaler', StandardScaler(with_mean=False))
 
                 ]
             )
@@ -65,23 +65,29 @@ class DataTransformation:
 
             logging.info('Read train and test DataFrames completed')
 
-            prprocessing_obj = self.get_data_tranformation()
+            preprocessing_obj = self.get_data_tranformation()
 
             target_col = "math_score"
-            num_cols = ["reading_score","writing_score"]
 
-            input_feature_train_df = train_df.drop(columns=[target_col])
+            input_feature_train_df = train_df.drop(columns=[target_col], axis=1)
             target_feature_train_df = train_df[target_col]
 
-            input_feature_test_df = test_df.drop(columns=[target_col])
+            input_feature_test_df = test_df.drop(columns=[target_col], axis=1)
             target_feature_test_df = test_df[target_col]
 
+            logging.info('Preprocessing started!!')
+
+            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
+            input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
+
+            logging.info('Preprocessing completed')
+
             train_arr = np.c_[
-                input_feature_train_df, np.array(target_feature_train_df)
+                input_feature_train_arr, np.array(target_feature_train_df)
             ]
 
             test_arr = np.c_[
-                input_feature_test_df, np.array(target_feature_test_df)
+                input_feature_test_arr, np.array(target_feature_test_df)
             ]
 
             logging.info('crated train and test arrays')
@@ -89,7 +95,7 @@ class DataTransformation:
             save_object(
 
                 file_path = self.data_transformation_config.preprocessor_file_path,
-                obj = prprocessing_obj
+                obj = preprocessing_obj
             )
 
             return(
